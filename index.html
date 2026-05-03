@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electronegativity Visualizer</title>
+    <style>
+        :root {
+            --bg-color: #1e1e2f;
+            --panel-bg: #2a2a40;
+            --text-color: #e0e0e0;
+            --atom-a: #ff6b6b;
+            --atom-b: #4ecdc4;
+            --cloud: rgba(100, 180, 255, 0.4);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--panel-bg);
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            text-align: left;
+            border: 2px solid var(--atom-b);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: #ffd166;
+            text-align: center;
+        }
+
+        .modal-content p {
+            line-height: 1.5;
+            margin-bottom: 15px;
+            font-size: 1.05em;
+        }
+
+        .close-btn {
+            background: var(--atom-b);
+            color: var(--bg-color);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1.1em;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: #3db8b0;
+        }
+
+        /* Main App Styles */
+        .container {
+            background-color: var(--panel-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 700px;
+            width: 100%;
+        }
+
+        canvas {
+            background-color: #1a1a2e;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #3a3a50;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #1a1a2e;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #3a3a50;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        select, input[type="number"], input[type="range"] {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #4ecdc4;
+            background-color: #2a2a40;
+            color: white;
+            font-size: 1em;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        .custom-input {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .custom-input.active {
+            display: flex;
+        }
+
+        .info-panel {
+            background-color: #1a1a2e;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #3a3a50;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-text-row {
+            font-size: 1.2em;
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+        }
+
+        .highlight {
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        /* Spectrum Bar Styles */
+        .spectrum-box {
+            width: 100%;
+            margin-top: 5px;
+            padding-top: 15px;
+            border-top: 1px solid #3a3a50;
+            text-align: left;
+        }
+
+        .spectrum-bar {
+            height: 12px;
+            background: linear-gradient(to right, #4ecdc4 12%, #ffd166 40%, #ff6b6b 90%);
+            border-radius: 6px;
+            position: relative;
+            margin: 15px 0 5px 0;
+        }
+
+        .spectrum-marker {
+            position: absolute;
+            top: -6px;
+            width: 4px;
+            height: 24px;
+            background: white;
+            border: 1px solid black;
+            border-radius: 2px;
+            transform: translateX(-50%);
+            transition: left 0.3s ease;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .spectrum-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            color: #aaa;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Instructions Modal -->
+    <div id="introModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Welcome to the Electronegativity Visualizer!</h3>
+            <p><strong>What you are seeing:</strong> A simulation of a chemical bond. Two atoms are playing a "tug-of-war" for a cloud of shared electrons.</p>
+            <p><strong>Electronegativity Difference (ΔEN):</strong> Electronegativity measures how strongly an atom pulls on electrons. The <em>difference</em> (ΔEN) between the two atoms determines how the electrons are shared.</p>
+            <p><strong>What to do:</strong> Try choosing different elements from the dropdown menus (or use the custom sliders). Watch how changing the ΔEN shifts the electron cloud, pulling the bond from <em>Nonpolar Covalent</em>, to <em>Polar Covalent</em>, and eventually to an <em>Ionic</em> bond where the electrons are entirely transfered!</p>
+            <button class="close-btn" onclick="document.getElementById('introModal').style.display='none'">Got it, let's experiment!</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Electronegativity Tug-of-War</h2>
+        
+        <!-- Base internal resolution is 600x300, CSS handles the scaling -->
+        <canvas id="simCanvas"></canvas>
+
+        <div class="controls">
+            <!-- Atom A Controls -->
+            <div class="control-group">
+                <label style="color: var(--atom-a)">Atom 1</label>
+                <select id="selectA">
+                    <option value="2.2" data-symbol="H">Hydrogen (2.2)</option>
+                    <option value="2.5" data-symbol="C">Carbon (2.5)</option>
+                    <option value="3.0" data-symbol="N">Nitrogen (3.0)</option>
+                    <option value="3.5" data-symbol="O">Oxygen (3.5)</option>
+                    <option value="4.0" data-symbol="F">Fluorine (4.0)</option>
+                    <option value="0.9" data-symbol="Na">Sodium (0.9)</option>
+                    <option value="3.2" data-symbol="Cl">Chlorine (3.2)</option>
+                    <option value="0.8" data-symbol="K">Potassium (0.8)</option>
+                    <option value="custom" data-symbol="?" selected>Custom...</option>
+                </select>
+                <div id="customGroupA" class="custom-input">
+                    <span>EN: <span id="valA">2.1</span></span>
+                    <input type="range" id="enA" min="0.7" max="4.0" step="0.1" value="2.1">
+                </div>
+            </div>
+
+            <!-- Atom B Controls -->
+            <div class="control-group">
+                <label style="color: var(--atom-b)">Atom 2</label>
+                <select id="selectB">
+                    <option value="2.2" data-symbol="H">Hydrogen (2.2)</option>
+                    <option value="2.5" data-symbol="C">Carbon (2.5)</option>
+                    <option value="3.0" data-symbol="N">Nitrogen (3.0)</option>
+                    <option value="3.5" data-symbol="O">Oxygen (3.5)</option>
+                    <option value="4.0" data-symbol="F">Fluorine (4.0)</option>
+                    <option value="0.9" data-symbol="Na">Sodium (0.9)</option>
+                    <option value="3.2" data-symbol="Cl">Chlorine (3.2)</option>
+                    <option value="0.8" data-symbol="K">Potassium (0.8)</option>
+                    <option value="custom" data-symbol="?" selected>Custom...</option>
+                </select>
+                <div id="customGroupB" class="custom-input">
+                    <span>EN: <span id="valB">3.0</span></span>
+                    <input type="range" id="enB" min="0.7" max="4.0" step="0.1" value="3.0">
+                </div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <div class="info-text-row">
+                <div>ΔEN: <span id="deltaValue" class="highlight" style="color: #ffd166;">0.9</span></div>
+                <div>Bond Type: <span id="bondType" class="highlight" style="color: #ffd166;">Polar Covalent</span></div>
+            </div>
+            
+            <!-- Visual scale for Delta EN -->
+            <div class="spectrum-box">
+                <div style="font-size: 0.9em; text-align: center;">Visual Electronegativity Difference Scale</div>
+                <div class="spectrum-bar">
+                    <div id="spectrumMarker" class="spectrum-marker"></div>
+                </div>
+                <div class="spectrum-labels">
+                    <span>Nonpolar (0 - 0.4)</span>
+                    <span>Polar (0.41 - 1.7)</span>
+                    <span>Ionic (> 1.7)</span>
+                    <span>(3.3 Max)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const selectA = document.getElementById('selectA');
+        const selectB = document.getElementById('selectB');
+        
+        const customGroupA = document.getElementById('customGroupA');
+        const customGroupB = document.getElementById('customGroupB');
+        
+        const enAInput = document.getElementById('enA');
+        const enBInput = document.getElementById('enB');
+        
+        const spectrumMarker = document.getElementById('spectrumMarker');
+        const bondTypeLabel = document.getElementById('bondType');
+        const deltaValueLabel = document.getElementById('deltaValue');
+
+        // State variables for the animation loop
+        let currentEnA = 2.1;
+        let currentEnB = 3.0;
+        let currentSymbolA = "?";
+        let currentSymbolB = "?";
+
+        // Setup high-resolution canvas (Retina Display Fix)
+        const baseWidth = 600;
+        const baseHeight = 300;
+        
+        function setupCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = baseWidth * dpr;
+            canvas.height = baseHeight * dpr;
+            ctx.scale(dpr, dpr);
+            // CSS handles the display size via max-width 100%
+        }
+        setupCanvas();
+
+        // Generate electrons with dynamic animation variables
+        const numElectrons = 25; // Adjusted for a cleaner look while moving
+        const electrons = [];
+        for (let i = 0; i < numElectrons; i++) {
+            electrons.push({
+                angle: Math.random() * Math.PI * 2,
+                r: Math.sqrt(Math.random()) * 0.9, // Keeps them inside the boundary
+                vAngle: (Math.random() - 0.5) * 0.05, // Velocity of rotation
+                vR: (Math.random() - 0.5) * 0.01      // Velocity of inward/outward drift
+            });
+        }
+
+        // Event Listeners
+        selectA.addEventListener('change', updateInputs);
+        selectB.addEventListener('change', updateInputs);
+        enAInput.addEventListener('input', updateInputs);
+        enBInput.addEventListener('input', updateInputs);
+
+        function updateInputs() {
+            // Handle Atom A logic
+            if (selectA.value === "custom") {
+                customGroupA.classList.add("active");
+                currentEnA = parseFloat(enAInput.value);
+                currentSymbolA = "Custom";
+                document.getElementById('valA').innerText = currentEnA.toFixed(1);
+            } else {
+                customGroupA.classList.remove("active");
+                currentEnA = parseFloat(selectA.value);
+                currentSymbolA = selectA.options[selectA.selectedIndex].dataset.symbol;
+            }
+
+            // Handle Atom B logic
+            if (selectB.value === "custom") {
+                customGroupB.classList.add("active");
+                currentEnB = parseFloat(enBInput.value);
+                currentSymbolB = "Custom";
+                document.getElementById('valB').innerText = currentEnB.toFixed(1);
+            } else {
+                customGroupB.classList.remove("active");
+                currentEnB = parseFloat(selectB.value);
+                currentSymbolB = selectB.options[selectB.selectedIndex].dataset.symbol;
+            }
+        }
+
+        // Main Drawing Function (Called every frame)
+        function drawSimulation(enA, enB, symbolA, symbolB) {
+            ctx.clearRect(0, 0, baseWidth, baseHeight);
+
+            const deltaEN = Math.abs(enB - enA);
+            const difference = enB - enA; 
+
+            // Update UI text and spectrum pointer
+            deltaValueLabel.innerText = deltaEN.toFixed(1);
+            
+            // Map 0 to 3.3 to a percentage for the marker
+            let markerPercentage = Math.min((deltaEN / 3.3) * 100, 100);
+            spectrumMarker.style.left = markerPercentage + '%';
+
+            // Determine Bond Type & Text Colors
+            let bondType = "Nonpolar Covalent";
+            let typeColor = "#4ecdc4"; // Nonpolar color
+
+            if (deltaEN > 1.7) {
+                bondType = "Ionic";
+                typeColor = "#ff6b6b"; // Ionic color
+            } else if (deltaEN > 0.40) {
+                bondType = "Polar Covalent";
+                typeColor = "#ffd166"; // Polar color
+            }
+            
+            bondTypeLabel.innerText = bondType;
+            bondTypeLabel.style.color = typeColor;
+            deltaValueLabel.style.color = typeColor;
+
+            // Base coordinates
+            let centerX_A = 200;
+            let centerX_B = 400;
+            const centerY = 150;
+            const atomRadius = 40;
+
+            // If ionic, separate the atoms slightly
+            if (bondType === "Ionic") {
+                centerX_A -= 30;
+                centerX_B += 30;
+            }
+
+            // --- DRAW CANVAS LEGEND ---
+            ctx.fillStyle = "#ffd166";
+            ctx.beginPath();
+            ctx.arc(20, 20, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.font = "italic 14px Arial";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText("= Electron (e⁻)", 30, 20);
+
+            // --- DRAW ELECTRON CLOUD ---
+            let cloudCenterX, cloudRadiusX, cloudRadiusY;
+            ctx.fillStyle = "rgba(100, 180, 255, 0.4)";
+            ctx.beginPath();
+            
+            if (bondType === "Ionic") {
+                // Electron moves entirely to the more electronegative atom
+                const winnerX = difference > 0 ? centerX_B : centerX_A;
+                cloudCenterX = winnerX;
+                cloudRadiusX = atomRadius + 25;
+                cloudRadiusY = atomRadius + 25;
+                ctx.ellipse(cloudCenterX, centerY, cloudRadiusX, cloudRadiusY, 0, 0, Math.PI * 2);
+            } else {
+                // Cloud shifts smoothly based on EN difference
+                cloudCenterX = 300 + (difference * 45); 
+                cloudRadiusX = Math.max(atomRadius, 120 - (deltaEN * 15));      
+                cloudRadiusY = Math.max(atomRadius, 60 - (deltaEN * 10));
+                ctx.ellipse(cloudCenterX, centerY, cloudRadiusX, cloudRadiusY, 0, 0, Math.PI * 2);
+            }
+            ctx.fill();
+
+            // --- DRAW CLOUD LABEL ---
+            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+            ctx.font = "italic 14px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("Electron Density", cloudCenterX, centerY - cloudRadiusY - 15);
+
+            // --- DRAW ATOM A ---
+            ctx.fillStyle = "#ff6b6b";
+            ctx.beginPath();
+            ctx.arc(centerX_A, centerY, atomRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // --- DRAW ATOM B ---
+            ctx.fillStyle = "#4ecdc4";
+            ctx.beginPath();
+            ctx.arc(centerX_B, centerY, atomRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // --- DRAW LABELS & PARTIAL CHARGES ---
+            ctx.fillStyle = "white";
+            ctx.font = "bold 20px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            // Adjust font size slightly if text is longer
+            if (symbolA === "Custom") {
+                ctx.font = "bold 16px Arial";
+            }
+            ctx.fillText(symbolA, centerX_A, centerY);
+            
+            if (symbolB === "Custom") {
+                ctx.font = "bold 16px Arial";
+            } else {
+                ctx.font = "bold 20px Arial"; // Reset back if it's not custom
+            }
+            ctx.fillText(symbolB, centerX_B, centerY);
+
+            ctx.font = "bold 18px Arial";
+            if (bondType === "Polar Covalent") {
+                if (enA > enB) {
+                    ctx.fillText("δ-", centerX_A - 55, centerY - 40);
+                    ctx.fillText("δ+", centerX_B + 55, centerY - 40);
+                } else if (enB > enA) {
+                    ctx.fillText("δ+", centerX_A - 55, centerY - 40);
+                    ctx.fillText("δ-", centerX_B + 55, centerY - 40);
+                }
+            } else if (bondType === "Ionic") {
+                if (enA > enB) {
+                    ctx.fillText("-", centerX_A - 55, centerY - 40);
+                    ctx.fillText("+", centerX_B + 55, centerY - 40);
+                } else if (enB > enA) {
+                    ctx.fillText("+", centerX_A - 55, centerY - 40);
+                    ctx.fillText("-", centerX_B + 55, centerY - 40);
+                }
+            }
+
+            // --- DRAW ELECTRONS (SWARM) ---
+            ctx.fillStyle = "#ffd166"; 
+            ctx.shadowBlur = 4;           // Added a subtle glow
+            ctx.shadowColor = "#ffd166";
+            
+            electrons.forEach(e => {
+                // Randomly perturb velocities slightly for organic movement
+                if (Math.random() < 0.05) {
+                    e.vAngle = (Math.random() - 0.5) * 0.05;
+                    e.vR = (Math.random() - 0.5) * 0.01;
+                }
+
+                // Apply velocities
+                e.angle += e.vAngle;
+                e.r += e.vR;
+
+                // Bounce off the inner/outer constraints of the cloud
+                if (e.r > 0.95) { e.r = 0.95; e.vR *= -1; }
+                if (e.r < 0) { e.r = 0; e.vR *= -1; }
+
+                // Calculate actual X/Y based on current cloud shape and electron's polar coordinates
+                let ex = cloudCenterX + (e.r * cloudRadiusX * Math.cos(e.angle));
+                let ey = centerY + (e.r * cloudRadiusY * Math.sin(e.angle));
+
+                // Draw individual electron dot
+                ctx.beginPath();
+                ctx.arc(ex, ey, 3.5, 0, Math.PI * 2); // Increased radius to 3.5
+                ctx.fill();
+            });
+
+            ctx.shadowBlur = 0; // Reset shadow so it doesn't bleed into other shapes next frame
+        }
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            drawSimulation(currentEnA, currentEnB, currentSymbolA, currentSymbolB);
+        }
+
+        // Initialize
+        updateInputs();
+        animate(); // Start the loop
+    </script>
+</body>
+</html>
