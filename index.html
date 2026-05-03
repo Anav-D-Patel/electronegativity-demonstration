@@ -87,6 +87,17 @@
             width: 100%;
         }
 
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-container h2 {
+            margin: 0;
+        }
+
         canvas {
             background-color: #1a1a2e;
             border-radius: 8px;
@@ -201,6 +212,19 @@
             color: #aaa;
             font-weight: bold;
         }
+
+        .hint-symbols {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            background: #1a1a2e;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 2.5em;
+            font-weight: bold;
+            border: 1px dashed #ffd166;
+        }
     </style>
 </head>
 <body>
@@ -216,8 +240,34 @@
         </div>
     </div>
 
+    <!-- Hint Modal -->
+    <div id="hintModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="border-color: #ffd166;">
+            <h3>Observation Hint</h3>
+            <p>As you change the atoms and the bond type shifts, keep an eye out for these special symbols appearing on the screen:</p>
+            
+            <div class="hint-symbols">
+                <span style="color: white;">δ+</span>
+                <span style="color: white;">δ-</span>
+                <svg width="60" height="30" viewBox="0 0 60 30">
+                    <!-- Custom SVG representation of a dipole arrow -->
+                    <line x1="10" y1="15" x2="55" y2="15" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="45" y1="5" x2="55" y2="15" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="45" y1="25" x2="55" y2="15" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="18" y1="5" x2="18" y2="25" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+            </div>
+            
+            <p><strong>Discuss with your partner:</strong> What happens right before these symbols appear? What do you think they represent about the bond?</p>
+            <button class="close-btn" style="background: #ffd166; color: #1e1e2f;" onclick="document.getElementById('hintModal').style.display='none'">Return to Simulation</button>
+        </div>
+    </div>
+
     <div class="container">
-        <h2>Electronegativity Tug-of-War</h2>
+        <div class="header-container">
+            <h2>Electronegativity Tug-of-War</h2>
+            <button class="close-btn" style="width: auto; margin: 0; padding: 8px 16px; background: #ffd166; color: #1e1e2f;" onclick="document.getElementById('hintModal').style.display='flex'">Symbol Hint</button>
+        </div>
         
         <!-- Base internal resolution is 600x300, CSS handles the scaling -->
         <canvas id="simCanvas"></canvas>
@@ -323,14 +373,14 @@
         setupCanvas();
 
         // Generate electrons with dynamic animation variables
-        const numElectrons = 25; // Adjusted for a cleaner look while moving
+        const numElectrons = 25;
         const electrons = [];
         for (let i = 0; i < numElectrons; i++) {
             electrons.push({
                 angle: Math.random() * Math.PI * 2,
-                r: Math.sqrt(Math.random()) * 0.9, // Keeps them inside the boundary
-                vAngle: (Math.random() - 0.5) * 0.05, // Velocity of rotation
-                vR: (Math.random() - 0.5) * 0.01      // Velocity of inward/outward drift
+                r: Math.sqrt(Math.random()) * 0.9, 
+                vAngle: (Math.random() - 0.5) * 0.05,
+                vR: (Math.random() - 0.5) * 0.01
             });
         }
 
@@ -341,7 +391,6 @@
         enBInput.addEventListener('input', updateInputs);
 
         function updateInputs() {
-            // Handle Atom A logic
             if (selectA.value === "custom") {
                 customGroupA.classList.add("active");
                 currentEnA = parseFloat(enAInput.value);
@@ -353,7 +402,6 @@
                 currentSymbolA = selectA.options[selectA.selectedIndex].dataset.symbol;
             }
 
-            // Handle Atom B logic
             if (selectB.value === "custom") {
                 customGroupB.classList.add("active");
                 currentEnB = parseFloat(enBInput.value);
@@ -366,46 +414,89 @@
             }
         }
 
-        // Main Drawing Function (Called every frame)
+        // Main Drawing Function
         function drawSimulation(enA, enB, symbolA, symbolB) {
             ctx.clearRect(0, 0, baseWidth, baseHeight);
 
             const deltaEN = Math.abs(enB - enA);
             const difference = enB - enA; 
 
-            // Update UI text and spectrum pointer
             deltaValueLabel.innerText = deltaEN.toFixed(1);
             
-            // Map 0 to 3.3 to a percentage for the marker
             let markerPercentage = Math.min((deltaEN / 3.3) * 100, 100);
             spectrumMarker.style.left = markerPercentage + '%';
 
-            // Determine Bond Type & Text Colors
             let bondType = "Nonpolar Covalent";
-            let typeColor = "#4ecdc4"; // Nonpolar color
+            let typeColor = "#4ecdc4"; 
 
             if (deltaEN > 1.7) {
                 bondType = "Ionic";
-                typeColor = "#ff6b6b"; // Ionic color
+                typeColor = "#ff6b6b"; 
             } else if (deltaEN > 0.40) {
                 bondType = "Polar Covalent";
-                typeColor = "#ffd166"; // Polar color
+                typeColor = "#ffd166"; 
             }
             
             bondTypeLabel.innerText = bondType;
             bondTypeLabel.style.color = typeColor;
             deltaValueLabel.style.color = typeColor;
 
-            // Base coordinates
             let centerX_A = 200;
             let centerX_B = 400;
             const centerY = 150;
             const atomRadius = 40;
 
-            // If ionic, separate the atoms slightly
             if (bondType === "Ionic") {
                 centerX_A -= 30;
                 centerX_B += 30;
+            }
+
+            // --- DRAW DIPOLE ARROW (NEW PLACEMENT) ---
+            if (deltaEN > 0.40 && enA !== enB) {
+                // Moved arrow below the atoms to avoid colliding with text
+                const arrowY = centerY + 85; 
+                let startX, endX;
+                
+                // Tail starts at less electronegative (more positive), head points to more electronegative (more negative)
+                if (enB > enA) {
+                    startX = centerX_A + 20;
+                    endX = centerX_B - 20;
+                } else {
+                    startX = centerX_B - 20;
+                    endX = centerX_A + 20;
+                }
+                
+                ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+                ctx.lineWidth = 3;
+                ctx.lineCap = "round";
+                ctx.lineJoin = "round";
+                ctx.beginPath();
+                
+                // Main stem
+                ctx.moveTo(startX, arrowY);
+                ctx.lineTo(endX, arrowY);
+                
+                const headSize = 10;
+                const tailCrossPos = 12;
+                
+                if (enB > enA) {
+                    // Arrowhead pointing right
+                    ctx.moveTo(endX - headSize, arrowY - headSize);
+                    ctx.lineTo(endX, arrowY);
+                    ctx.lineTo(endX - headSize, arrowY + headSize);
+                    // Tail cross
+                    ctx.moveTo(startX + tailCrossPos, arrowY - headSize);
+                    ctx.lineTo(startX + tailCrossPos, arrowY + headSize);
+                } else {
+                    // Arrowhead pointing left
+                    ctx.moveTo(endX + headSize, arrowY - headSize);
+                    ctx.lineTo(endX, arrowY);
+                    ctx.lineTo(endX + headSize, arrowY + headSize);
+                    // Tail cross
+                    ctx.moveTo(startX - tailCrossPos, arrowY - headSize);
+                    ctx.lineTo(startX - tailCrossPos, arrowY + headSize);
+                }
+                ctx.stroke();
             }
 
             // --- DRAW CANVAS LEGEND ---
@@ -426,14 +517,12 @@
             ctx.beginPath();
             
             if (bondType === "Ionic") {
-                // Electron moves entirely to the more electronegative atom
                 const winnerX = difference > 0 ? centerX_B : centerX_A;
                 cloudCenterX = winnerX;
                 cloudRadiusX = atomRadius + 25;
                 cloudRadiusY = atomRadius + 25;
                 ctx.ellipse(cloudCenterX, centerY, cloudRadiusX, cloudRadiusY, 0, 0, Math.PI * 2);
             } else {
-                // Cloud shifts smoothly based on EN difference
                 cloudCenterX = 300 + (difference * 45); 
                 cloudRadiusX = Math.max(atomRadius, 120 - (deltaEN * 15));      
                 cloudRadiusY = Math.max(atomRadius, 60 - (deltaEN * 10));
@@ -465,7 +554,6 @@
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             
-            // Adjust font size slightly if text is longer
             if (symbolA === "Custom") {
                 ctx.font = "bold 16px Arial";
             }
@@ -474,7 +562,7 @@
             if (symbolB === "Custom") {
                 ctx.font = "bold 16px Arial";
             } else {
-                ctx.font = "bold 20px Arial"; // Reset back if it's not custom
+                ctx.font = "bold 20px Arial"; 
             }
             ctx.fillText(symbolB, centerX_B, centerY);
 
@@ -499,35 +587,30 @@
 
             // --- DRAW ELECTRONS (SWARM) ---
             ctx.fillStyle = "#ffd166"; 
-            ctx.shadowBlur = 4;           // Added a subtle glow
+            ctx.shadowBlur = 4;           
             ctx.shadowColor = "#ffd166";
             
             electrons.forEach(e => {
-                // Randomly perturb velocities slightly for organic movement
                 if (Math.random() < 0.05) {
                     e.vAngle = (Math.random() - 0.5) * 0.05;
                     e.vR = (Math.random() - 0.5) * 0.01;
                 }
 
-                // Apply velocities
                 e.angle += e.vAngle;
                 e.r += e.vR;
 
-                // Bounce off the inner/outer constraints of the cloud
                 if (e.r > 0.95) { e.r = 0.95; e.vR *= -1; }
                 if (e.r < 0) { e.r = 0; e.vR *= -1; }
 
-                // Calculate actual X/Y based on current cloud shape and electron's polar coordinates
                 let ex = cloudCenterX + (e.r * cloudRadiusX * Math.cos(e.angle));
                 let ey = centerY + (e.r * cloudRadiusY * Math.sin(e.angle));
 
-                // Draw individual electron dot
                 ctx.beginPath();
-                ctx.arc(ex, ey, 3.5, 0, Math.PI * 2); // Increased radius to 3.5
+                ctx.arc(ex, ey, 3.5, 0, Math.PI * 2); 
                 ctx.fill();
             });
 
-            ctx.shadowBlur = 0; // Reset shadow so it doesn't bleed into other shapes next frame
+            ctx.shadowBlur = 0; 
         }
 
         // Animation Loop
@@ -538,7 +621,7 @@
 
         // Initialize
         updateInputs();
-        animate(); // Start the loop
+        animate(); 
     </script>
 </body>
 </html>
