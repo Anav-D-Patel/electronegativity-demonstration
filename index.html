@@ -225,6 +225,39 @@
             font-weight: bold;
             border: 1px dashed #ffd166;
         }
+
+        /* Metallic Bond Banner */
+        #metallicBanner {
+            display: none;
+            background: linear-gradient(135deg, #2a1a3e, #1a2a3e);
+            border: 2px solid #c0a060;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            text-align: left;
+            animation: fadeIn 0.4s ease;
+        }
+
+        #metallicBanner h4 {
+            margin: 0 0 8px 0;
+            color: #f0c060;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #metallicBanner p {
+            margin: 0;
+            font-size: 0.95em;
+            line-height: 1.55;
+            color: #ccc;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -236,6 +269,7 @@
             <p><strong>What you are seeing:</strong> A simulation of a chemical bond. Two atoms are playing a "tug-of-war" for a cloud of shared electrons. Created by Anav, Martin, Dorian and Devan</p>
             <p><strong>Electronegativity Difference (ΔEN):</strong> Electronegativity measures how strongly an atom pulls on electrons. The <em>difference</em> (ΔEN) between the two atoms determines how the electrons are shared.</p>
             <p><strong>What to do:</strong> Try choosing different elements from the dropdown menus (or use the custom sliders). Watch how changing the ΔEN shifts the electron cloud, pulling the bond from <em>Nonpolar Covalent</em>, to <em>Polar Covalent</em>, and eventually to an <em>Ionic</em> bond where the electrons are entirely transfered!</p>
+            <p><strong>New:</strong> Try selecting two metals and see what happens — metal-metal interactions follow completely different rules!</p>
             <button class="close-btn" onclick="document.getElementById('introModal').style.display='none'">Got it, let's experiment!</button>
         </div>
     </div>
@@ -250,7 +284,6 @@
                 <span style="color: white;">δ+</span>
                 <span style="color: white;">δ-</span>
                 <svg width="60" height="30" viewBox="0 0 60 30">
-                    <!-- Custom SVG representation of a dipole arrow -->
                     <line x1="10" y1="15" x2="55" y2="15" stroke="white" stroke-width="4" stroke-linecap="round"/>
                     <line x1="45" y1="5" x2="55" y2="15" stroke="white" stroke-width="4" stroke-linecap="round"/>
                     <line x1="45" y1="25" x2="55" y2="15" stroke="white" stroke-width="4" stroke-linecap="round"/>
@@ -263,12 +296,44 @@
         </div>
     </div>
 
+    <!-- Metallic Bond Modal -->
+    <div id="metallicModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="border-color: #c0a060;">
+            <h3>⚙️ Metal + Metal = Metallic Bond!</h3>
+            <p>When two metals interact, they don't share or transfer electrons the way covalent or ionic bonds do. Instead, they form a <strong style="color: #f0c060;">metallic bond</strong>.</p>
+            <p>In a metallic bond, the metal atoms release their outer (valence) electrons into a shared "sea of electrons" that flows freely around a lattice of positively charged metal ions. No single atom owns the electrons — they belong to the whole structure!</p>
+            <p><strong>This is why metals are:</strong></p>
+            <ul style="line-height: 2;">
+                <li>🔌 <strong>Good conductors</strong> — electrons flow freely</li>
+                <li>🔨 <strong>Malleable & ductile</strong> — ions can slide without breaking bonds</li>
+                <li>✨ <strong>Shiny</strong> — free electrons reflect light</li>
+            </ul>
+            <p>The electronegativity difference (ΔEN) between two metals is usually very small, but the bond type is <em>not</em> nonpolar covalent — it's a fundamentally different kind of bond!</p>
+            <p style="background: rgba(255,255,255,0.07); border-left: 3px solid #ffd166; padding: 10px 14px; border-radius: 6px; font-size: 0.95em; color: #ffd166; margin-bottom: 5px;">
+                📚 <strong>Note for Gr. 11 students:</strong> Metallic bonding is <em>not</em> part of your curriculum — you won't be tested on this! But now you know it exists, and that's pretty cool. 😎
+            </p>
+            <button class="close-btn" style="background: #c0a060; color: #1e1e2f;" onclick="document.getElementById('metallicModal').style.display='none'">Got it!</button>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header-container">
             <h2>Electronegativity Tug-of-War</h2>
             <button class="close-btn" style="width: auto; margin: 0; padding: 8px 16px; background: #ffd166; color: #1e1e2f;" onclick="document.getElementById('hintModal').style.display='flex'">Symbol Hint</button>
         </div>
         
+        <!-- Metallic bond banner (shown inline when two metals are selected) -->
+        <div id="metallicBanner">
+            <h4>⚙️ Metallic Bond Detected!
+                <button onclick="document.getElementById('metallicModal').style.display='flex'"
+                    style="margin-left:auto; background:#c0a060; color:#1e1e2f; border:none; border-radius:5px; padding:4px 10px; font-size:0.8em; cursor:pointer; font-weight:bold;">
+                    Learn More
+                </button>
+            </h4>
+            <p>Both atoms are metals! Instead of sharing or transferring electrons, metals form a <strong>metallic bond</strong> — their valence electrons break free and flow through a shared "sea," surrounding a lattice of positive metal ions. This is why metals conduct electricity and are malleable. The standard ionic/covalent scale does not apply here.</p>
+            <p style="margin: 8px 0 0 0; font-size: 0.88em; color: #ffd166; opacity: 0.9;">📚 <strong>Gr. 11 note:</strong> This is beyond your curriculum — not on the test, but cool bonus knowledge!</p>
+        </div>
+
         <!-- Base internal resolution is 600x300, CSS handles the scaling -->
         <canvas id="simCanvas"></canvas>
 
@@ -277,15 +342,28 @@
             <div class="control-group">
                 <label style="color: var(--atom-a)">Atom 1</label>
                 <select id="selectA">
-                    <option value="2.2" data-symbol="H">Hydrogen (2.2)</option>
-                    <option value="2.5" data-symbol="C">Carbon (2.5)</option>
-                    <option value="3.0" data-symbol="N">Nitrogen (3.0)</option>
-                    <option value="3.5" data-symbol="O">Oxygen (3.5)</option>
-                    <option value="4.0" data-symbol="F">Fluorine (4.0)</option>
-                    <option value="0.9" data-symbol="Na">Sodium (0.9)</option>
-                    <option value="3.2" data-symbol="Cl">Chlorine (3.2)</option>
-                    <option value="0.8" data-symbol="K">Potassium (0.8)</option>
-                    <option value="custom" data-symbol="?" selected>Custom...</option>
+                    <optgroup label="── Nonmetals ──">
+                        <option value="2.2" data-symbol="H" data-metal="false">Hydrogen (2.2)</option>
+                        <option value="2.5" data-symbol="C" data-metal="false">Carbon (2.5)</option>
+                        <option value="3.0" data-symbol="N" data-metal="false">Nitrogen (3.0)</option>
+                        <option value="3.5" data-symbol="O" data-metal="false">Oxygen (3.5)</option>
+                        <option value="4.0" data-symbol="F" data-metal="false">Fluorine (4.0)</option>
+                        <option value="3.2" data-symbol="Cl" data-metal="false">Chlorine (3.2)</option>
+                        <option value="2.6" data-symbol="S"  data-metal="false">Sulfur (2.6)</option>
+                    </optgroup>
+                    <optgroup label="── Metals ──">
+                        <option value="0.9" data-symbol="Na" data-metal="true">Sodium (0.9)</option>
+                        <option value="0.8" data-symbol="K"  data-metal="true">Potassium (0.8)</option>
+                        <option value="1.0" data-symbol="Ca" data-metal="true">Calcium (1.0)</option>
+                        <option value="1.2" data-symbol="Mg" data-metal="true">Magnesium (1.2)</option>
+                        <option value="1.0" data-symbol="Li" data-metal="true">Lithium (1.0)</option>
+                        <option value="1.6" data-symbol="Al" data-metal="true">Aluminium (1.6)</option>
+                        <option value="1.8" data-symbol="Fe" data-metal="true">Iron (1.8)</option>
+                        <option value="1.9" data-symbol="Cu" data-metal="true">Copper (1.9)</option>
+                    </optgroup>
+                    <optgroup label="── Other ──">
+                        <option value="custom" data-symbol="?" data-metal="false" selected>Custom...</option>
+                    </optgroup>
                 </select>
                 <div id="customGroupA" class="custom-input">
                     <span>EN: <span id="valA">2.1</span></span>
@@ -297,15 +375,28 @@
             <div class="control-group">
                 <label style="color: var(--atom-b)">Atom 2</label>
                 <select id="selectB">
-                    <option value="2.2" data-symbol="H">Hydrogen (2.2)</option>
-                    <option value="2.5" data-symbol="C">Carbon (2.5)</option>
-                    <option value="3.0" data-symbol="N">Nitrogen (3.0)</option>
-                    <option value="3.5" data-symbol="O">Oxygen (3.5)</option>
-                    <option value="4.0" data-symbol="F">Fluorine (4.0)</option>
-                    <option value="0.9" data-symbol="Na">Sodium (0.9)</option>
-                    <option value="3.2" data-symbol="Cl">Chlorine (3.2)</option>
-                    <option value="0.8" data-symbol="K">Potassium (0.8)</option>
-                    <option value="custom" data-symbol="?" selected>Custom...</option>
+                    <optgroup label="── Nonmetals ──">
+                        <option value="2.2" data-symbol="H" data-metal="false">Hydrogen (2.2)</option>
+                        <option value="2.5" data-symbol="C" data-metal="false">Carbon (2.5)</option>
+                        <option value="3.0" data-symbol="N" data-metal="false">Nitrogen (3.0)</option>
+                        <option value="3.5" data-symbol="O" data-metal="false">Oxygen (3.5)</option>
+                        <option value="4.0" data-symbol="F" data-metal="false">Fluorine (4.0)</option>
+                        <option value="3.2" data-symbol="Cl" data-metal="false">Chlorine (3.2)</option>
+                        <option value="2.6" data-symbol="S"  data-metal="false">Sulfur (2.6)</option>
+                    </optgroup>
+                    <optgroup label="── Metals ──">
+                        <option value="0.9" data-symbol="Na" data-metal="true">Sodium (0.9)</option>
+                        <option value="0.8" data-symbol="K"  data-metal="true">Potassium (0.8)</option>
+                        <option value="1.0" data-symbol="Ca" data-metal="true">Calcium (1.0)</option>
+                        <option value="1.2" data-symbol="Mg" data-metal="true">Magnesium (1.2)</option>
+                        <option value="1.0" data-symbol="Li" data-metal="true">Lithium (1.0)</option>
+                        <option value="1.6" data-symbol="Al" data-metal="true">Aluminium (1.6)</option>
+                        <option value="1.8" data-symbol="Fe" data-metal="true">Iron (1.8)</option>
+                        <option value="1.9" data-symbol="Cu" data-metal="true">Copper (1.9)</option>
+                    </optgroup>
+                    <optgroup label="── Other ──">
+                        <option value="custom" data-symbol="?" data-metal="false" selected>Custom...</option>
+                    </optgroup>
                 </select>
                 <div id="customGroupB" class="custom-input">
                     <span>EN: <span id="valB">3.0</span></span>
@@ -321,17 +412,23 @@
             </div>
             
             <!-- Visual scale for Delta EN -->
-            <div class="spectrum-box">
+            <div class="spectrum-box" id="spectrumBox">
                 <div style="font-size: 0.9em; text-align: center;">Visual Electronegativity Difference Scale</div>
                 <div class="spectrum-bar">
                     <div id="spectrumMarker" class="spectrum-marker"></div>
                 </div>
                 <div class="spectrum-labels">
-                    <span>Nonpolar (0 - 0.4)</span>
-                    <span>Polar (0.41 - 1.7)</span>
-                    <span>Ionic (> 1.7)</span>
+                    <span>Nonpolar (0 – 0.4)</span>
+                    <span>Polar (0.41 – 1.7)</span>
+                    <span>Ionic (&gt; 1.7)</span>
                     <span>(3.3 Max)</span>
                 </div>
+            </div>
+
+            <!-- Shown only for metallic bonds -->
+            <div id="metallicScaleNote" style="display:none; padding-top:12px; border-top:1px solid #3a3a50; font-size:0.9em; color:#c0a060; text-align:center;">
+                ⚙️ The ionic/covalent scale does not apply to metallic bonds.<br>
+                Electrons are pooled into a shared "electron sea" across both atoms.
             </div>
         </div>
     </div>
@@ -352,12 +449,29 @@
         const spectrumMarker = document.getElementById('spectrumMarker');
         const bondTypeLabel = document.getElementById('bondType');
         const deltaValueLabel = document.getElementById('deltaValue');
+        const metallicBanner = document.getElementById('metallicBanner');
+        const metallicScaleNote = document.getElementById('metallicScaleNote');
+        const spectrumBar = document.querySelector('.spectrum-bar');
+        const spectrumLabels = document.querySelector('.spectrum-labels');
 
         // State variables for the animation loop
         let currentEnA = 2.1;
         let currentEnB = 3.0;
         let currentSymbolA = "?";
         let currentSymbolB = "?";
+        let isMetallicBond = false;
+
+        // Free-electron sea particles for metallic mode
+        const numSeaElectrons = 30;
+        const seaElectrons = [];
+        for (let i = 0; i < numSeaElectrons; i++) {
+            seaElectrons.push({
+                x: Math.random(),   // 0-1 fraction of bond width
+                y: (Math.random() - 0.5) * 2, // -1 to 1 fraction of cloud height
+                vx: (Math.random() - 0.5) * 0.008,
+                vy: (Math.random() - 0.5) * 0.005,
+            });
+        }
 
         // Setup high-resolution canvas (Retina Display Fix)
         const baseWidth = 600;
@@ -368,7 +482,6 @@
             canvas.width = baseWidth * dpr;
             canvas.height = baseHeight * dpr;
             ctx.scale(dpr, dpr);
-            // CSS handles the display size via max-width 100%
         }
         setupCanvas();
 
@@ -384,13 +497,24 @@
             });
         }
 
+        // Track if the metallic modal has been shown this session
+        let metallicModalShown = false;
+
         // Event Listeners
         selectA.addEventListener('change', updateInputs);
         selectB.addEventListener('change', updateInputs);
         enAInput.addEventListener('input', updateInputs);
         enBInput.addEventListener('input', updateInputs);
 
+        function isMetalOption(selectEl) {
+            const opt = selectEl.options[selectEl.selectedIndex];
+            return opt && opt.dataset.metal === "true";
+        }
+
         function updateInputs() {
+            const metalA = isMetalOption(selectA);
+            const metalB = isMetalOption(selectB);
+
             if (selectA.value === "custom") {
                 customGroupA.classList.add("active");
                 currentEnA = parseFloat(enAInput.value);
@@ -412,6 +536,29 @@
                 currentEnB = parseFloat(selectB.value);
                 currentSymbolB = selectB.options[selectB.selectedIndex].dataset.symbol;
             }
+
+            isMetallicBond = (metalA && metalB);
+
+            if (isMetallicBond) {
+                metallicBanner.style.display = 'block';
+                metallicScaleNote.style.display = 'block';
+                spectrumBar.style.display = 'none';
+                spectrumLabels.style.display = 'none';
+                bondTypeLabel.innerText = "Metallic";
+                bondTypeLabel.style.color = "#c0a060";
+                deltaValueLabel.style.color = "#c0a060";
+
+                // Show the modal the first time metals are selected
+                if (!metallicModalShown) {
+                    document.getElementById('metallicModal').style.display = 'flex';
+                    metallicModalShown = true;
+                }
+            } else {
+                metallicBanner.style.display = 'none';
+                metallicScaleNote.style.display = 'none';
+                spectrumBar.style.display = 'block';
+                spectrumLabels.style.display = 'flex';
+            }
         }
 
         // Main Drawing Function
@@ -421,43 +568,61 @@
             const deltaEN = Math.abs(enB - enA);
             const difference = enB - enA; 
 
-            deltaValueLabel.innerText = deltaEN.toFixed(1);
-            
-            let markerPercentage = Math.min((deltaEN / 3.3) * 100, 100);
-            spectrumMarker.style.left = markerPercentage + '%';
+            if (!isMetallicBond) {
+                deltaValueLabel.innerText = deltaEN.toFixed(1);
+                
+                let markerPercentage = Math.min((deltaEN / 3.3) * 100, 100);
+                spectrumMarker.style.left = markerPercentage + '%';
 
-            let bondType = "Nonpolar Covalent";
-            let typeColor = "#4ecdc4"; 
+                let bondType = "Nonpolar Covalent";
+                let typeColor = "#4ecdc4"; 
 
-            if (deltaEN > 1.7) {
-                bondType = "Ionic";
-                typeColor = "#ff6b6b"; 
-            } else if (deltaEN > 0.40) {
-                bondType = "Polar Covalent";
-                typeColor = "#ffd166"; 
+                if (deltaEN > 1.7) {
+                    bondType = "Ionic";
+                    typeColor = "#ff6b6b"; 
+                } else if (deltaEN > 0.40) {
+                    bondType = "Polar Covalent";
+                    typeColor = "#ffd166"; 
+                }
+                
+                bondTypeLabel.innerText = bondType;
+                bondTypeLabel.style.color = typeColor;
+                deltaValueLabel.style.color = typeColor;
+            } else {
+                deltaValueLabel.innerText = deltaEN.toFixed(1);
             }
-            
-            bondTypeLabel.innerText = bondType;
-            bondTypeLabel.style.color = typeColor;
-            deltaValueLabel.style.color = typeColor;
+
+            // ============================
+            // METALLIC BOND DRAWING
+            // ============================
+            if (isMetallicBond) {
+                drawMetallicBond(symbolA, symbolB);
+                return;
+            }
+
+            // ============================
+            // NORMAL BOND DRAWING
+            // ============================
+            const deltaEN2 = Math.abs(enB - enA);
+            let bondType2 = "Nonpolar Covalent";
+            if (deltaEN2 > 1.7) bondType2 = "Ionic";
+            else if (deltaEN2 > 0.40) bondType2 = "Polar Covalent";
 
             let centerX_A = 200;
             let centerX_B = 400;
             const centerY = 150;
             const atomRadius = 40;
 
-            if (bondType === "Ionic") {
+            if (bondType2 === "Ionic") {
                 centerX_A -= 30;
                 centerX_B += 30;
             }
 
-            // --- DRAW DIPOLE ARROW (NEW PLACEMENT) ---
-            if (deltaEN > 0.40 && enA !== enB) {
-                // Moved arrow below the atoms to avoid colliding with text
+            // --- DRAW DIPOLE ARROW ---
+            if (deltaEN2 > 0.40 && enA !== enB) {
                 const arrowY = centerY + 85; 
                 let startX, endX;
                 
-                // Tail starts at less electronegative (more positive), head points to more electronegative (more negative)
                 if (enB > enA) {
                     startX = centerX_A + 20;
                     endX = centerX_B - 20;
@@ -472,7 +637,6 @@
                 ctx.lineJoin = "round";
                 ctx.beginPath();
                 
-                // Main stem
                 ctx.moveTo(startX, arrowY);
                 ctx.lineTo(endX, arrowY);
                 
@@ -480,19 +644,15 @@
                 const tailCrossPos = 12;
                 
                 if (enB > enA) {
-                    // Arrowhead pointing right
                     ctx.moveTo(endX - headSize, arrowY - headSize);
                     ctx.lineTo(endX, arrowY);
                     ctx.lineTo(endX - headSize, arrowY + headSize);
-                    // Tail cross
                     ctx.moveTo(startX + tailCrossPos, arrowY - headSize);
                     ctx.lineTo(startX + tailCrossPos, arrowY + headSize);
                 } else {
-                    // Arrowhead pointing left
                     ctx.moveTo(endX + headSize, arrowY - headSize);
                     ctx.lineTo(endX, arrowY);
                     ctx.lineTo(endX + headSize, arrowY + headSize);
-                    // Tail cross
                     ctx.moveTo(startX - tailCrossPos, arrowY - headSize);
                     ctx.lineTo(startX - tailCrossPos, arrowY + headSize);
                 }
@@ -516,7 +676,7 @@
             ctx.fillStyle = "rgba(100, 180, 255, 0.4)";
             ctx.beginPath();
             
-            if (bondType === "Ionic") {
+            if (bondType2 === "Ionic") {
                 const winnerX = difference > 0 ? centerX_B : centerX_A;
                 cloudCenterX = winnerX;
                 cloudRadiusX = atomRadius + 25;
@@ -524,8 +684,8 @@
                 ctx.ellipse(cloudCenterX, centerY, cloudRadiusX, cloudRadiusY, 0, 0, Math.PI * 2);
             } else {
                 cloudCenterX = 300 + (difference * 45); 
-                cloudRadiusX = Math.max(atomRadius, 120 - (deltaEN * 15));      
-                cloudRadiusY = Math.max(atomRadius, 60 - (deltaEN * 10));
+                cloudRadiusX = Math.max(atomRadius, 120 - (deltaEN2 * 15));      
+                cloudRadiusY = Math.max(atomRadius, 60 - (deltaEN2 * 10));
                 ctx.ellipse(cloudCenterX, centerY, cloudRadiusX, cloudRadiusY, 0, 0, Math.PI * 2);
             }
             ctx.fill();
@@ -554,20 +714,15 @@
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             
-            if (symbolA === "Custom") {
-                ctx.font = "bold 16px Arial";
-            }
+            if (symbolA === "Custom") { ctx.font = "bold 16px Arial"; }
             ctx.fillText(symbolA, centerX_A, centerY);
             
-            if (symbolB === "Custom") {
-                ctx.font = "bold 16px Arial";
-            } else {
-                ctx.font = "bold 20px Arial"; 
-            }
+            if (symbolB === "Custom") { ctx.font = "bold 16px Arial"; }
+            else { ctx.font = "bold 20px Arial"; }
             ctx.fillText(symbolB, centerX_B, centerY);
 
             ctx.font = "bold 18px Arial";
-            if (bondType === "Polar Covalent") {
+            if (bondType2 === "Polar Covalent") {
                 if (enA > enB) {
                     ctx.fillText("δ-", centerX_A - 55, centerY - 40);
                     ctx.fillText("δ+", centerX_B + 55, centerY - 40);
@@ -575,7 +730,7 @@
                     ctx.fillText("δ+", centerX_A - 55, centerY - 40);
                     ctx.fillText("δ-", centerX_B + 55, centerY - 40);
                 }
-            } else if (bondType === "Ionic") {
+            } else if (bondType2 === "Ionic") {
                 if (enA > enB) {
                     ctx.fillText("-", centerX_A - 55, centerY - 40);
                     ctx.fillText("+", centerX_B + 55, centerY - 40);
@@ -611,6 +766,118 @@
             });
 
             ctx.shadowBlur = 0; 
+        }
+
+        // ============================
+        // METALLIC BOND CANVAS DRAWING
+        // ============================
+        function drawMetallicBond(symbolA, symbolB) {
+            const centerY = baseHeight / 2;
+            const atomRadius = 40;
+            const centerX_A = 170;
+            const centerX_B = 430;
+
+            // Draw a wide "electron sea" background across the middle
+            const seaLeft   = centerX_A - atomRadius - 10;
+            const seaRight  = centerX_B + atomRadius + 10;
+            const seaMidX   = (seaLeft + seaRight) / 2;
+            const seaWidth  = seaRight - seaLeft;
+            const seaHeight = 90;
+
+            // Glowing sea gradient
+            const seaGrad = ctx.createRadialGradient(seaMidX, centerY, 10, seaMidX, centerY, seaWidth * 0.6);
+            seaGrad.addColorStop(0,   "rgba(192, 160, 96, 0.35)");
+            seaGrad.addColorStop(0.6, "rgba(192, 160, 96, 0.15)");
+            seaGrad.addColorStop(1,   "rgba(192, 160, 96, 0.0)");
+            ctx.fillStyle = seaGrad;
+            ctx.beginPath();
+            ctx.ellipse(seaMidX, centerY, seaWidth / 2, seaHeight / 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Animate sea electrons
+            seaElectrons.forEach(e => {
+                // Bounce off ellipse walls (approx)
+                e.x += e.vx;
+                e.y += e.vy;
+
+                const hw = seaWidth / 2 - 8;
+                const hh = seaHeight / 2 - 8;
+                const normX = e.x * hw;
+                const normY = e.y * hh;
+                // Keep inside ellipse
+                if ((normX * normX) / (hw * hw) + (normY * normY) / (hh * hh) > 0.95) {
+                    e.vx *= -1;
+                    e.vy *= -1;
+                    // nudge back
+                    e.x += e.vx;
+                    e.y += e.vy;
+                }
+
+                const ex = seaMidX + e.x * hw;
+                const ey = centerY  + e.y * hh;
+
+                ctx.fillStyle = "#ffd166";
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = "#ffd166";
+                ctx.beginPath();
+                ctx.arc(ex, ey, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+
+            // Draw label above sea
+            ctx.fillStyle = "rgba(192, 160, 96, 0.9)";
+            ctx.font = "italic 13px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("Electron Sea (shared, free-flowing)", seaMidX, centerY - seaHeight / 2 - 14);
+
+            // Legend
+            ctx.fillStyle = "#ffd166";
+            ctx.beginPath();
+            ctx.arc(20, 20, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.font = "italic 14px Arial";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText("= Valence Electron (free)", 30, 20);
+
+            // Draw Atom A (positive ion lattice node)
+            ctx.fillStyle = "#ff6b6b";
+            ctx.beginPath();
+            ctx.arc(centerX_A, centerY, atomRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw Atom B
+            ctx.fillStyle = "#4ecdc4";
+            ctx.beginPath();
+            ctx.arc(centerX_B, centerY, atomRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Labels
+            ctx.fillStyle = "white";
+            ctx.font = "bold 20px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(symbolA === "Custom" ? "?" : symbolA, centerX_A, centerY);
+            ctx.fillText(symbolB === "Custom" ? "?" : symbolB, centerX_B, centerY);
+
+            // Show ion charges below atoms
+            ctx.font = "bold 15px Arial";
+            ctx.fillStyle = "rgba(192, 160, 96, 0.9)";
+            ctx.fillText("(+" + " ion)", centerX_A, centerY + atomRadius + 16);
+            ctx.fillText("(+" + " ion)", centerX_B, centerY + atomRadius + 16);
+
+            // Draw lattice connection line
+            ctx.strokeStyle = "rgba(192, 160, 96, 0.4)";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 5]);
+            ctx.beginPath();
+            ctx.moveTo(centerX_A + atomRadius, centerY);
+            ctx.lineTo(centerX_B - atomRadius, centerY);
+            ctx.stroke();
+            ctx.setLineDash([]);
         }
 
         // Animation Loop
